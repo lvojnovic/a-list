@@ -18,7 +18,7 @@ export default class Item extends React.Component {
 
 const styles = StyleSheet.create({
     container: {
-        justifyContent: 'flex-start'
+        justifyContent: 'flex-start',
     },
     button: {
         alignItems: 'flex-start',
@@ -26,6 +26,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#e5e5e5',
         marginTop: 10,
+        marginHorizontal: 10,
         padding: 5,
         height: 50
     },

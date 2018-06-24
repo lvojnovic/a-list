@@ -4,6 +4,7 @@ import React from 'react';
 import { KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import Item from './Item';
+import Header from './Header';
 
 export default class App extends React.Component {
 
@@ -41,6 +42,7 @@ export default class App extends React.Component {
         });
         return (
             <View style={styles.container}>
+              <Header text="A list"/>
               <KeyboardAvoidingView behavior="padding" style={{flex: 1}}>
                 <View style={styles.list}>
                   {items}
@@ -71,17 +73,16 @@ export default class App extends React.Component {
 
 const styles = StyleSheet.create({
     container: {
-        padding: Constants.statusBarHeight,
         flex: 1,
         backgroundColor: '#fff',
-        alignItems: 'center',
+        alignItems: 'stretch',
         justifyContent: 'center',
-        flexDirection: 'row'
     },
     list: {
         flex: 1
     },
     input: {
-        height: 40
+        height: 60,
+        paddingBottom: 20
     }
 });
