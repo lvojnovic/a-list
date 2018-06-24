@@ -28,6 +28,10 @@ export default class App extends React.Component {
         this.setState({items: this.state.items.map((i, ix) => ix == index ? toggleDone(i) : i)});
     }
 
+    deleteDone() {
+        this.setState({items: this.state.items.filter(i => !i.done)});
+    }
+
     render() {
         if (!this.state.fontLoaded) return <AppLoading />;
 
@@ -42,7 +46,11 @@ export default class App extends React.Component {
         });
         return (
             <View style={styles.container}>
-              <Header text="A list"/>
+              <Header
+                text="A list"
+                actionDisabled={!this.state.items.some(i => i.done)}
+                doAction={this.deleteDone.bind(this)}
+                />
               <KeyboardAvoidingView behavior="padding" style={{flex: 1}}>
                 <View style={styles.list}>
                   {items}
