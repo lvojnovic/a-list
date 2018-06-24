@@ -9,7 +9,7 @@ export default class Item extends React.Component {
                  style={styles.button}
                  onPress={this.props.onPress}
                  >
-                <Text style={styles.text}>{this.props.text}</Text>
+                <Text style={[styles.text, this.props.done ? styles.strike : {}]}>{this.props.text}</Text>
               </TouchableOpacity>
             </View>
         );
@@ -33,5 +33,8 @@ const styles = StyleSheet.create({
         color: '#8c8a8a',
         fontFamily: 'custom-font-regular',
         fontSize: 25
+    },
+    strike: {
+        textDecorationLine: 'line-through'
     }
 });

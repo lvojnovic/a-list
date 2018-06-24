@@ -22,15 +22,22 @@ export default class App extends React.Component {
         this.setState({ fontLoaded: true });
     }
 
-    removeItem(indexToRemove) {
-        this.setState({items: this.state.items.filter((i, ix) => ix != indexToRemove)});
+    onPressItem(index) {
+        let toggleDone = (i) => Object.assign(i, {done:!i.done});
+        this.setState({items: this.state.items.map((i, ix) => ix == index ? toggleDone(i) : i)});
     }
 
     render() {
         if (!this.state.fontLoaded) return <AppLoading />;
 
         let items = this.state.items.map((item, ix) => {
-            return ( <Item text={item} key={ix} onPress={() => this.removeItem(ix)}/>);
+            return (
+                <Item
+                  text={item.text}
+                  done={item.done}
+                  key={ix}
+                  onPress={() => this.onPressItem(ix)}
+                  />);
         });
         return (
             <View style={styles.container}>
@@ -51,7 +58,7 @@ export default class App extends React.Component {
                      value={this.state.buffer}
                      onChangeText={text => this.setState({buffer:text})}
                      onSubmitEditing={() => {
-                         this.setState({items: this.state.items.concat([this.state.buffer])});
+                         this.setState({items: this.state.items.concat([{text:this.state.buffer, done:false}])});
                          this.setState({buffer:''});
                      }}
                     />
