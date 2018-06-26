@@ -32,18 +32,23 @@ export default class App extends React.Component {
         this.setState({items: this.state.items.filter(i => !i.done)});
     }
 
+    onSubmitEditing() {
+        this.setState({items: this.state.items.concat([{text:this.state.buffer, done:false}])});
+        this.setState({buffer:''});
+    }
+
     render() {
         if (!this.state.fontLoaded) return <AppLoading />;
 
-        let items = this.state.items.map((item, ix) => {
-            return (
+        let items = this.state.items.map(
+            (item, ix) =>
                 <Item
                   text={item.text}
                   done={item.done}
                   key={ix}
                   onPress={() => this.onPressItem(ix)}
-                  />);
-        });
+                  />
+        );
         return (
             <View style={styles.container}>
               <Header
@@ -55,22 +60,13 @@ export default class App extends React.Component {
                 <View style={styles.list}>
                   {items}
                 </View>
-                <View style={styles.input}>
+                <View style={styles.inputContainer}>
                   <TextInput
-                     style={{
-                         flex: 1,
-                         padding: 5,
-                         height: 40,
-                         fontFamily: 'custom-font-regular',
-                         fontSize: 18
-                     }}
+                     style={styles.input}
                      placeholder="Add a new item"
                      value={this.state.buffer}
                      onChangeText={text => this.setState({buffer:text})}
-                     onSubmitEditing={() => {
-                         this.setState({items: this.state.items.concat([{text:this.state.buffer, done:false}])});
-                         this.setState({buffer:''});
-                     }}
+                     onSubmitEditing={this.onSubmitEditing.bind(this)}
                     />
                 </View>
               </KeyboardAvoidingView>
@@ -84,13 +80,20 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
         alignItems: 'stretch',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     list: {
         flex: 1
     },
-    input: {
+    inputContainer: {
         height: 60,
         paddingBottom: 20
+    },
+    input: {
+        flex: 1,
+        padding: 5,
+        height: 40,
+        fontFamily: 'custom-font-regular',
+        fontSize: 18
     }
 });
