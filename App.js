@@ -5,13 +5,15 @@ import { KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from 'react-n
 
 import Item from './Item';
 import Header from './Header';
+import Suggestion from './Suggestion';
 
 export default class App extends React.Component {
 
     state = {
         fontLoaded: false,
         buffer: null,
-        items: []
+        items: [],
+        suggestions: []
     }
 
     async componentDidMount() {
@@ -33,8 +35,34 @@ export default class App extends React.Component {
     }
 
     onSubmitEditing() {
-        this.setState({items: this.state.items.concat([{text:this.state.buffer, done:false}])});
-        this.setState({buffer:''});
+        this.addItem(this.state.buffer);
+        this.setState({buffer:'', suggestions: []});
+    }
+
+    addItem(text) {
+        this.setState({items: this.state.items.concat([{text:text, done:false}])});
+    }
+
+    autoComplete(text) {
+        if (!text || text.length < 3) {
+            this.setState({suggestions:[]});
+        } else {
+            let suggestions = this.state.items
+                    .filter(i => i.text.startsWith(text))
+                    .map(i => i.text);
+            let uniqueSuggestions = [...new Set(suggestions)];
+            this.setState({suggestions:uniqueSuggestions});
+        }
+    }
+
+    onChangeText(text) {
+        this.setState({buffer:text});
+        this.autoComplete(text);
+    }
+
+    onSuggestionSelect(text) {
+        this.addItem(text);
+        this.setState({suggestions:[], buffer:''});
     }
 
     render() {
@@ -49,6 +77,16 @@ export default class App extends React.Component {
                   onPress={() => this.onPressItem(ix)}
                   />
         );
+
+        let suggestions = this.state.suggestions.map(
+            (item, ix) =>
+                <Suggestion
+                  key={ix}
+                  text={item}
+                  onPress={() => this.onSuggestionSelect(item)}
+                />
+
+        );
         return (
             <View style={styles.container}>
               <Header
@@ -60,12 +98,15 @@ export default class App extends React.Component {
                 <View style={styles.list}>
                   {items}
                 </View>
+                <View style={styles.suggestionsList}>
+                  {suggestions}
+                </View>
                 <View style={styles.inputContainer}>
                   <TextInput
                      style={styles.input}
                      placeholder="Add a new item"
                      value={this.state.buffer}
-                     onChangeText={text => this.setState({buffer:text})}
+                     onChangeText={this.onChangeText.bind(this)}
                      onSubmitEditing={this.onSubmitEditing.bind(this)}
                     />
                 </View>
@@ -85,9 +126,15 @@ const styles = StyleSheet.create({
     list: {
         flex: 1
     },
+    suggestionsList: {
+        paddingLeft: 15,
+        alignSelf: 'flex-start',
+        backgroundColor: '#fff'
+    },
     inputContainer: {
         height: 60,
-        paddingBottom: 20
+        paddingBottom: 20,
+        backgroundColor: '#fff'
     },
     input: {
         flex: 1,
