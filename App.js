@@ -111,6 +111,7 @@ export default class App extends React.Component {
                   <TextInput
                      style={styles.input}
                      placeholder="Add a new item"
+                     blurOnSubmit={false}
                      value={this.state.buffer}
                      onChangeText={this.onChangeText.bind(this)}
                      onSubmitEditing={this.onSubmitEditing.bind(this)}
