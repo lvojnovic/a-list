@@ -54,8 +54,10 @@ export default class App extends React.Component {
         } else {
             let suggestions = this.state.history
                     .filter(i => i.text.startsWith(text))
+                    .sort((a, b) => a.count - b.count)
                     .map(i => i.text);
-            this.setState({suggestions:suggestions});
+            let size = suggestions.length;
+            this.setState({suggestions:suggestions.slice(size > 3 ? size - 3 : 0)});
         }
     }
 
