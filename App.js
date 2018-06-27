@@ -13,7 +13,8 @@ export default class App extends React.Component {
         fontLoaded: false,
         buffer: null,
         items: [],
-        suggestions: []
+        suggestions: [],
+        history: []
     }
 
     async componentDidMount() {
@@ -40,18 +41,21 @@ export default class App extends React.Component {
     }
 
     addItem(text) {
-        this.setState({items: this.state.items.concat([{text:text, done:false}])});
+        let items = this.state.items.concat([{text:text, done:false}]);
+        let historyItem = this.state.history.find(i => i.text == text) || {count:0};
+        let otherHistory = this.state.history.filter(i => i.text != text);
+        let history = otherHistory.concat([{text:text, count: (historyItem.count+1)}]);
+        this.setState({items: items, history: history});
     }
 
     autoComplete(text) {
         if (!text || text.length < 3) {
             this.setState({suggestions:[]});
         } else {
-            let suggestions = this.state.items
+            let suggestions = this.state.history
                     .filter(i => i.text.startsWith(text))
                     .map(i => i.text);
-            let uniqueSuggestions = [...new Set(suggestions)];
-            this.setState({suggestions:uniqueSuggestions});
+            this.setState({suggestions:suggestions});
         }
     }
 
