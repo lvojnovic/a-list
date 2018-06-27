@@ -6,10 +6,12 @@ export default class Item extends React.Component {
         return (
             <View style={styles.container}>
               <TouchableOpacity
-                 style={styles.button}
+                 style={[styles.button, , this.props.done ? styles.doneButton : {}]}
                  onPress={this.props.onPress}
                  >
-                <Text style={[styles.text, this.props.done ? styles.strike : {}]}>{this.props.text}</Text>
+                <Text style={[styles.text, this.props.done ? styles.doneText : {}]}>
+                  {this.props.text}
+                </Text>
               </TouchableOpacity>
             </View>
         );
@@ -18,7 +20,7 @@ export default class Item extends React.Component {
 
 const styles = StyleSheet.create({
     container: {
-        justifyContent: 'flex-start',
+        justifyContent: 'flex-start'
     },
     button: {
         alignItems: 'flex-start',
@@ -35,7 +37,11 @@ const styles = StyleSheet.create({
         fontFamily: 'custom-font-regular',
         fontSize: 25
     },
-    strike: {
+    doneButton: {
+        backgroundColor: '#eaeaea'
+    },
+    doneText: {
+        color: '#afacac',
         textDecorationLine: 'line-through'
     }
 });
