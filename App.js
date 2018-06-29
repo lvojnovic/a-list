@@ -36,6 +36,8 @@ export default class App extends React.Component {
     }
 
     onSubmitEditing() {
+        if (this.state.buffer == null || this.state.buffer.trim() == '') return;
+
         this.addItem(this.state.buffer);
         this.setState({buffer:'', suggestions: []});
     }
