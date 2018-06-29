@@ -1,7 +1,7 @@
 import { AppLoading, Font } from 'expo';
 import { Constants } from 'expo';
 import React from 'react';
-import { KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import Item from './Item';
 import Header from './Header';
@@ -101,9 +101,11 @@ export default class App extends React.Component {
                 doAction={this.deleteDone.bind(this)}
                 />
               <KeyboardAvoidingView behavior="padding" style={{flex: 1}}>
-                <View style={styles.list}>
-                  {items}
-                </View>
+                <ScrollView style={{flex:1}}>
+                  <View style={styles.list}>
+                    {items}
+                  </View>
+                </ScrollView>
                 <View style={styles.suggestionsList}>
                   {suggestions}
                 </View>
