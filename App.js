@@ -114,6 +114,7 @@ export default class App extends React.Component {
                      style={styles.input}
                      placeholder="Add a new item"
                      blurOnSubmit={false}
+                     underlineColorAndroid="#397bce"
                      value={this.state.buffer}
                      onChangeText={this.onChangeText.bind(this)}
                      onSubmitEditing={this.onSubmitEditing.bind(this)}
@@ -142,7 +143,7 @@ const styles = StyleSheet.create({
     },
     inputContainer: {
         height: 60,
-        paddingBottom: 20,
+        paddingBottom: 15,
         backgroundColor: '#fff'
     },
     input: {
