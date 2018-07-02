@@ -1,4 +1,4 @@
-import { AppLoading, Font } from 'expo';
+import { AppLoading, Font, SQLite } from 'expo';
 import { Constants } from 'expo';
 import React from 'react';
 import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -6,6 +6,8 @@ import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, View } f
 import Item from './Item';
 import Header from './Header';
 import Suggestion from './Suggestion';
+
+const db = SQLite.openDatabase('db.db');
 
 export default class App extends React.Component {
 
@@ -18,6 +20,15 @@ export default class App extends React.Component {
     }
 
     async componentDidMount() {
+        db.transaction(tx => {
+            tx.executeSql(
+                'create table if not exists items (id integer primary key not null, value text, done int);'
+            );
+            tx.executeSql(
+                'create table if not exists history (id integer primary key not null, value text, count int);'
+            );
+        }, null, this.update.bind(this));
+
         await Font.loadAsync({
             'custom-font-regular': require('./assets/fonts/Quicksand-Regular.ttf'),
             'custom-font-bold': require('./assets/fonts/Quicksand-Bold.ttf')
@@ -27,12 +38,16 @@ export default class App extends React.Component {
     }
 
     onPressItem(index) {
-        let toggleDone = (i) => Object.assign(i, {done:!i.done});
+        let toggleDone = (i) => Object.assign(i, {done: (i.done == 0 ? 1 : 0)});
         this.setState({items: this.state.items.map((i, ix) => ix == index ? toggleDone(i) : i)});
     }
 
     deleteDone() {
-        this.setState({items: this.state.items.filter(i => !i.done)});
+        db.transaction(tx => {
+            this.state.items.filter(i => i.done).forEach(i => {
+                tx.executeSql('delete from items where id = ?', [i.id]);
+            });
+        }, null, this.update.bind(this));
     }
 
     onSubmitEditing() {
@@ -43,11 +58,31 @@ export default class App extends React.Component {
     }
 
     addItem(text) {
-        let items = this.state.items.concat([{text:text, done:false}]);
-        let historyItem = this.state.history.find(i => i.text == text) || {count:0};
-        let otherHistory = this.state.history.filter(i => i.text != text);
-        let history = otherHistory.concat([{text:text, count: (historyItem.count+1)}]);
-        this.setState({items: items, history: history});
+        db.transaction( tx => {
+            tx.executeSql('insert into items (done, value) values (0, ?)', [text]);
+        }, null, this.update.bind(this));
+
+        this.updateHistory(text);
+    }
+
+    updateHistory(text) {
+        let update = (tx, text, oldCount) => {
+            let count = oldCount + 1;
+            tx.executeSql('update history set count = ? where value = ?', [count, text], this.update.bind(this));
+        };
+
+        let add = (tx, text) => {
+            tx.executeSql('insert into history (value, count) values (?, 1)', [text], this.update.bind(this));
+        };
+
+        db.transaction( tx => {
+            tx.executeSql('select id, count from history where value = ?',
+                          [text],
+                          (tx, {rows: { length, _array }}) => {
+                              if (length) update(tx, text, _array[0].count);
+                              else add(tx, text);
+                          }, (_, error) => console.log('error???', error));
+        });
     }
 
     autoComplete(text) {
@@ -55,9 +90,9 @@ export default class App extends React.Component {
             this.setState({suggestions:[]});
         } else {
             let suggestions = this.state.history
-                    .filter(i => i.text.startsWith(text))
+                    .filter(i => i.value.startsWith(text))
                     .sort((a, b) => a.count - b.count)
-                    .map(i => i.text);
+                    .map(i => i.value);
             let size = suggestions.length;
             this.setState({suggestions:suggestions.slice(size > 3 ? size - 3 : 0)});
         }
@@ -73,15 +108,37 @@ export default class App extends React.Component {
         this.setState({suggestions:[], buffer:''});
     }
 
+    update() {
+        let app = this;
+        db.transaction(tx => {
+            tx.executeSql(
+                `select * from items`,
+                [],
+                (_, { rows: { _array } }) => {
+                    app.setState({ items: (_array || []) });
+                }
+            );
+        });
+        db.transaction(tx => {
+            tx.executeSql(
+                `select * from history`,
+                [],
+                (_, { rows: { _array } }) => {
+                    app.setState({ history: (_array || []) });
+                }
+            );
+        });
+    }
+
     render() {
         if (!this.state.fontLoaded) return <AppLoading />;
 
         let items = this.state.items.map(
             (item, ix) =>
                 <Item
-                  text={item.text}
+                  text={item.value}
                   done={item.done}
-                  key={ix}
+                  key={item.id}
                   onPress={() => this.onPressItem(ix)}
                   />
         );
