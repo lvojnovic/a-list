@@ -12,9 +12,11 @@ const db = SQLite.openDatabase('db.db');
 export default class App extends React.Component {
 
     state = {
+        scrollEnabled: true,
         fontLoaded: false,
         buffer: null,
         items: [],
+        delayedItems: [],
         suggestions: [],
         history: []
     }
@@ -27,6 +29,21 @@ export default class App extends React.Component {
             tx.executeSql(
                 'create table if not exists history (id integer primary key not null, value text, count int);'
             );
+            tx.executeSql(
+                'PRAGMA user_version',
+                null,
+                (tx, result) => {
+                    if (result.rows.item(0).user_version == 0) {
+                        tx.executeSql(
+                            'alter table items ADD column delayed int',
+                            null,
+                            (tx, result) => {
+                                tx.executeSql('PRAGMA user_version = 1;');
+                            }
+                        );
+                    }
+                }
+            );
         }, null, this.update.bind(this));
 
         await Font.loadAsync({
@@ -37,9 +54,16 @@ export default class App extends React.Component {
         this.setState({ fontLoaded: true });
     }
 
-    onPressItem(index) {
+    onPressItem(item) {
         let toggleDone = (i) => Object.assign(i, {done: (i.done == 0 ? 1 : 0)});
-        this.setState({items: this.state.items.map((i, ix) => ix == index ? toggleDone(i) : i)});
+        this.setState({items: this.state.items.map((i) => i.id == item.id ? toggleDone(i) : i)});
+    }
+
+    onSwipeItem(item) {
+        db.transaction(tx => {
+            tx.executeSql('update items set delayed = ? where id = ?',
+                          [!item.delayed ? 1 : 0, item.id]);
+        }, null, this.update.bind(this));
     }
 
     deleteDone() {
@@ -59,7 +83,7 @@ export default class App extends React.Component {
 
     addItem(text) {
         db.transaction( tx => {
-            tx.executeSql('insert into items (done, value) values (0, ?)', [text]);
+            tx.executeSql('insert into items (done, delayed, value) values (0, 0, ?)', [text]);
         }, null, this.update.bind(this));
 
         this.updateHistory(text);
@@ -130,16 +154,37 @@ export default class App extends React.Component {
         });
     }
 
+    setScrollEnabled(enable) {
+        this.setState({
+           scrollEnabled: enable
+        });
+    }
+
+
     render() {
         if (!this.state.fontLoaded) return <AppLoading />;
 
-        let items = this.state.items.map(
+        let nextItems = this.state.items.filter(i => !i.delayed).map(
             (item, ix) =>
                 <Item
                   text={item.value}
                   done={item.done}
                   key={item.id}
-                  onPress={() => this.onPressItem(ix)}
+                  setScrollEnabled={this.setScrollEnabled.bind(this)}
+                  onPress={() => this.onPressItem(item)}
+                  onSwipe={() => this.onSwipeItem(item)}
+                  />
+        );
+
+        let delayedItems = this.state.items.filter(i => i.delayed == 1).map(
+            (item, ix) =>
+                <Item
+                  text={item.value}
+                  done={item.done}
+                  key={item.id}
+                  setScrollEnabled={this.setScrollEnabled.bind(this)}
+                  onPress={() => this.onPressItem(item)}
+                  onSwipe={() => this.onSwipeItem(item)}
                   />
         );
 
@@ -152,6 +197,7 @@ export default class App extends React.Component {
                 />
 
         );
+
         return (
             <View style={styles.container}>
               <Header
@@ -160,9 +206,16 @@ export default class App extends React.Component {
                 doAction={this.deleteDone.bind(this)}
                 />
               <KeyboardAvoidingView behavior="padding" style={{flex: 1}}>
-                <ScrollView style={{flex:1}}>
+                <ScrollView
+                   style={{flex:1}}
+                   scrollEnabled={this.state.scrollEnabled}
+                   >
                   <View style={styles.list}>
-                    {items}
+                    {nextItems}
+                  </View>
+                  <View style={styles.divider}/>
+                  <View style={styles.delayed_list}>
+                    {delayedItems}
                   </View>
                 </ScrollView>
                 <View style={styles.suggestionsList}>
@@ -194,6 +247,16 @@ const styles = StyleSheet.create({
     },
     list: {
         flex: 1
+    },
+    divider: {
+        height: 5,
+        backgroundColor: '#e5e5e5',
+        borderWidth: 1,
+        borderColor: '#d1d1d1',
+        borderRadius: 100
+    },
+    delayed_list: {
+        paddingTop: 10
     },
     suggestionsList: {
         paddingLeft: 15,
