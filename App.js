@@ -223,6 +223,7 @@ export default class App extends React.Component {
                 </View>
                 <View style={styles.inputContainer}>
                   <TextInput
+                     autoFocus={true}
                      style={styles.input}
                      placeholder="Add a new item"
                      blurOnSubmit={false}
